@@ -1,0 +1,273 @@
+generator client {
+  provider             = "prisma-client-py"
+  recursive_type_depth = "5"
+}
+
+generator py {
+  provider                    = "prisma-client-py"
+  enable_experimental_decimal = "true"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = "mysql://innovit_user:innovit_pwd@mysql-innovit.alwaysdata.net:3306/innovit_smartbev"
+}
+
+model annonceur {
+  id           Int     @id @default(autoincrement())
+  nom          String? @db.VarChar(120)
+  prenom       String? @db.VarChar(120)
+  mail         String? @db.VarChar(120)
+  tel          String? @db.VarChar(120)
+  idCreatedpar Int?
+
+  @@index([idCreatedpar], map: "idCreatedpar")
+}
+
+model categorie {
+  id        Int     @id @default(autoincrement())
+  categorie String? @db.VarChar(120)
+}
+
+model categoryclaims {
+  id          Int           @id @default(autoincrement())
+  claim       String?       @db.VarChar(120)
+  message     String        @db.VarChar(120)
+  reclamation reclamation[]
+}
+
+model categoryrecette {
+  id          Int         @id @default(autoincrement())
+  description String?     @db.VarChar(120)
+  publicite   publicite[]
+  recette     recette[]
+}
+
+model categorysensors {
+  id       Int       @id @default(autoincrement())
+  sensor   String?   @db.VarChar(120)
+  security Boolean   @default(false)
+  sensors  sensors[]
+}
+
+model commande {
+  id           Int         @id @default(autoincrement())
+  idRecette    Int
+  idIngredient Int?
+  quantity     String      @db.VarChar(50)
+  ingredient   ingredient? @relation(fields: [idIngredient], references: [id])
+  recette      recette     @relation(fields: [idRecette], references: [id])
+  facture      facture[]
+
+  @@index([idIngredient], map: "idIngredient")
+  @@index([idRecette], map: "idRecette")
+}
+
+model distributeur {
+  id                  Int                   @id @default(autoincrement())
+  identifiant         String                @unique @db.VarChar(250)
+  capaciteGoblet      Int?
+  capaciteSucre       Int?
+  capaciteSpoon       Int?
+  distributeurRecette distributeurRecette[]
+  facture             facture[]
+  pack                pack?
+  sensors             sensors[]
+}
+
+model distributeurRecette {
+  idDistr      Int
+  idRecette    Int
+  price        Decimal      @default(0.000000000000000000000000000000)
+  distributeur distributeur @relation(fields: [idDistr], references: [id])
+  recette      recette      @relation(fields: [idRecette], references: [id])
+
+  @@id([idRecette, idDistr])
+  @@index([idDistr], map: "distributeurRecette_idDistr_fkey")
+}
+
+model entrepise {
+  id      Int     @id @default(autoincrement())
+  nom     String? @db.VarChar(120)
+  adresse String? @db.VarChar(120)
+  mail    String? @db.VarChar(120)
+  tel     String? @db.VarChar(120)
+  link    String? @db.VarChar(120)
+  pack    pack[]
+  task    task[]
+  users   users[]
+}
+
+model facture {
+  id            Int           @id @default(autoincrement())
+  idDistr       Int?
+  idComm        Int?
+  idInfoPaiment Int?
+  commande      commande?     @relation(fields: [idComm], references: [id])
+  distributeur  distributeur? @relation(fields: [idDistr], references: [id])
+  infopaiment   infopaiment?  @relation(fields: [idInfoPaiment], references: [id])
+
+  @@index([idComm], map: "idComm")
+  @@index([idDistr], map: "idDistr")
+  @@index([idInfoPaiment], map: "idInfoPaiment")
+}
+
+model infopaiment {
+  id           Int       @id @default(autoincrement())
+  mail         String?   @db.VarChar(120)
+  cartePaiment String?   @db.VarChar(120)
+  ccv          String?   @db.VarChar(120)
+  expiryDate   String?   @db.VarChar(25)
+  facture      facture[]
+}
+
+model ingredient {
+  id          Int           @id @default(autoincrement())
+  type        Int?
+  description String?       @db.VarChar(120)
+  prixUnit    Int?
+  commande    commande[]
+  recetteingr recetteingr[]
+}
+
+model pack {
+  idDistr      Int          @unique
+  idEntre      Int
+  codeverou    String?      @db.VarChar(120)
+  localisation String?      @db.VarChar(120)
+  idState      Int          @default(2)
+  distributeur distributeur @relation(fields: [idDistr], references: [id])
+  entrepise    entrepise    @relation(fields: [idEntre], references: [id])
+
+  @@id([idDistr, idEntre])
+  @@index([idEntre], map: "idEntre")
+}
+
+model publicite {
+  id              Int              @id @default(autoincrement())
+  url             String?          @db.VarChar(120)
+  idCategorie     Int?
+  idCategRecette  Int?
+  idAnnonceur     Int?
+  categoryrecette categoryrecette? @relation(fields: [idCategRecette], references: [id])
+
+  @@index([idAnnonceur], map: "idAnnonceur")
+  @@index([idCategRecette], map: "idCategRecette")
+  @@index([idCategorie], map: "idCategorie")
+}
+
+model recette {
+  id                  Int                   @id @default(autoincrement())
+  idCategRecette      Int?
+  name                String?               @db.VarChar(120)
+  description         String?               @db.VarChar(500)
+  price               Decimal               @default(0.000000000000000000000000000000)
+  imageLink           String?               @db.VarChar(120)
+  commande            commande[]
+  distributeurRecette distributeurRecette[]
+  categoryrecette     categoryrecette?      @relation(fields: [idCategRecette], references: [id])
+  recetteingr         recetteingr[]
+
+  @@index([idCategRecette], map: "idCategRecette")
+}
+
+model recetteingr {
+  idRecette    Int
+  idIngredient Int
+  quantity     String?    @db.VarChar(50)
+  ingredient   ingredient @relation(fields: [idIngredient], references: [id])
+  recette      recette    @relation(fields: [idRecette], references: [id])
+
+  @@id([idRecette, idIngredient])
+  @@index([idIngredient], map: "idIngredient")
+}
+
+model reclamation {
+  id              Int             @id @default(autoincrement())
+  idFacture       Int?
+  message         String?         @db.VarChar(120)
+  isDone          Boolean?
+  idCategoryClaim Int?
+  categoryclaims  categoryclaims? @relation(fields: [idCategoryClaim], references: [id])
+
+  @@index([idFacture], map: "idFacture")
+  @@index([idCategoryClaim], map: "reclamation_idCategoryClaim_fkey")
+}
+
+model role {
+  id          Int     @id @default(autoincrement())
+  description String? @db.VarChar(120)
+}
+
+model sensors {
+  id              Int             @id @default(autoincrement())
+  idDistr         Int
+  idSensor        Int
+  value           String          @db.VarChar(50)
+  date            String?         @db.VarChar(255)
+  distributeur    distributeur    @relation(fields: [idDistr], references: [id])
+  categorysensors categorysensors @relation(fields: [idSensor], references: [id])
+
+  @@index([idDistr], map: "idDistr")
+  @@index([idSensor], map: "idSensor")
+}
+
+model task {
+  id        Int       @id @default(autoincrement())
+  idDistr   Int
+  idUser    Int?
+  idEntre   Int
+  idType    Int
+  isDone    Boolean   @default(false)
+  isOpen    Boolean   @default(false)
+  date      String
+  time      String
+  message   String    @db.VarChar(120)
+  entrepise entrepise @relation(fields: [idEntre], references: [id])
+  typetask  typetask  @relation(fields: [idType], references: [id])
+  users     users?    @relation(fields: [idUser], references: [id])
+
+  @@index([idDistr], map: "idDistr")
+  @@index([idEntre], map: "idEntre")
+  @@index([idType], map: "idType")
+  @@index([idUser], map: "idUser")
+}
+
+model tokens {
+  id     Int     @id @default(autoincrement())
+  idUser Int     @unique
+  token  String?
+  users  users   @relation(fields: [idUser], references: [id])
+}
+
+model typetask {
+  id          Int     @id @default(autoincrement())
+  identifiant String  @unique
+  description String? @db.VarChar(120)
+  task        task[]
+}
+
+model users {
+  id           Int        @id @default(autoincrement())
+  nom          String?    @db.VarChar(120)
+  prenom       String?    @db.VarChar(120)
+  mail         String?    @db.VarChar(120)
+  mdp          String?    @db.VarChar(120)
+  tel          String?    @db.VarChar(120)
+  idRole       Int?
+  idCreatedpar Int?
+  idEntreprise Int?
+  isActive     Int?
+  task         task[]
+  tokens       tokens?
+  entrepise    entrepise? @relation(fields: [idEntreprise], references: [id])
+
+  @@index([idCreatedpar], map: "idCreatedpar")
+  @@index([idEntreprise], map: "idEntreprise")
+  @@index([idRole], map: "idRole")
+}
+
+model state {
+  id          Int    @id @default(autoincrement())
+  description String
+}

@@ -26,9 +26,9 @@ connections = []
 #Expressions Régulières 
 boisson =  {"VERSER_BOISSON_1":2,"VERSER_BOISSON_2":17}
 toppings = {"VERSER_TOPPING_1":3}
-expression_boisson = r"VERSER_BOISSON_([1234])"
-expression_topping = r"VERSER_TOPPING_([1234])"
-expression_quantite = r"VERSER_QUANT_([12345])"
+expression_boisson = r"VERSER_BOISSON_([1234])_QUANT_([12345])"
+expression_topping = r"VERSER_TOPPING_([1234])_QUANT_([12345])"
+#expression_quantite = r"VERSER_QUANT_([12345])"
 
 
 #Recevoir les niveaux des capteurs
@@ -52,7 +52,7 @@ def reheat():
     #ser2.write(commandeRelay)
     #commandePompe = "VerserEau"
     GPIO.output(18, GPIO.HIGH) # Allume la LED
-    time.sleep(2) # Attend 1 seconde
+    time.sleep(4) # Attend 1 seconde
     GPIO.output(18, GPIO.LOW) # Éteint la LED
     
     #ser.write(commandeMotor.encode())
@@ -94,25 +94,25 @@ def etat_next(state,action):
     elif (state == "A") and (action == "REHEAT" ) :
         return "A1"
     elif ( state == "A1") and (re.match(expression_boisson,action)) :
-        return "A2"
-    elif ( state == "A2" ) and (re.match(expression_quantite,action)) :
         return "B"
+    #elif ( state == "A2" ) and (re.match(expression_quantite,action)) :
+        #return "B"
     elif (state == "B" ) and (re.match(expression_boisson,action)):
-        return "B1"
-    elif (state == "B1") and ( re.match(expression_quantite,action)):
         return "B"
+    #elif (state == "B1") and ( re.match(expression_quantite,action)):
+        #return "B"
     elif( state == "B") and ( re.match(expression_topping,action)):
-        return "B2"
-    elif ( state == "B2" ) and ( re.match(expression_quantite,action)):
         return "C"
+    #elif ( state == "B2" ) and ( re.match(expression_quantite,action)):
+        #return "C"
     elif (state == "B" ) and ( action == "GET_SPOON"):
         return "F"
     elif (state == "C" ) and ( action == "GET_SPOON"):
         return "F"
     elif ( state == "C") and ( re.match(expression_topping,action)):
-        return "C1"
-    elif ( state == "C1") and ( re.match(expression_quantite,action)):
         return "C"
+    #elif ( state == "C1") and ( re.match(expression_quantite,action)):
+        #return "C"
     else:
         return "ERR"
     
@@ -186,7 +186,7 @@ def client_thread(conn, addr):
             nb = automate(data)
             if nb > 0:
                 #Vérifier les niveaux
-                if Verifier_niveau():
+                if True:#Verifier_niveau():
                     current = 0
                     for key, value in data.items():
                         if isinstance(value, dict):
